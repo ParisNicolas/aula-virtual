@@ -4,8 +4,9 @@ from werkzeug.utils import secure_filename
 import os
 
 from app import db
-from app.models import Curso, Usuario
-from app.forms import LoginForm, RegisterForm, ContentForm
+from app.models import Curso, Usuario, Contenido, asignaciones
+from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm
+
 
 main = Blueprint('main', __name__, template_folder='templates')
 
@@ -52,17 +53,40 @@ def logout():
     flash("Has cerrado session.", "success")
     return redirect(url_for("main.home"))
 
-#Crear un contenido nuevo (solo profesores)
-@main.route('/curso/<curso_id>/crear', methods=['GET','POST'])
+import os
+from flask import current_app
+
+@main.route('/curso/<curso_id>/crear', methods=['GET', 'POST'])
 def crear_contenido(curso_id):
+    curso = Curso.query.get_or_404(curso_id)
     form = ContentForm()
     if form.validate_on_submit():
         archivo = form.archivo.data
-        filename = secure_filename(archivo.filename)  # Asegura que el nombre del archivo sea seguro
-        archivo.save(os.path.join('static/uploads/', filename))  # Guarda el archivo
+        filename = secure_filename(archivo.filename)
+        
+        # Ruta absoluta para la carpeta 'static/uploads/'
+        upload_folder = os.path.join(current_app.root_path, 'static/uploads/')
+        
+        # Guarda el archivo usando la ruta absoluta
+        archivo.save(os.path.join(upload_folder, filename))
+
+        # Crea un nuevo contenido en la base de datos
+        nuevo_contenido = Contenido(
+            titulo=form.titulo.data,
+            descripcion=form.descripcion.data,
+            tipo='archivo',
+            archivo=filename,
+            enlace_externo=form.enlace_externo.data or None,
+            curso_id=curso.id
+        )
+        db.session.add(nuevo_contenido)
+        db.session.commit()
+
         flash('Contenido subido exitosamente', 'success')
-        return redirect(url_for('ver_curso'))  # Redirigir a una página relevante
-    return render_template('teacher/contentForm.html', form=form)
+        return redirect(url_for('main.ver_curso', curso_id=curso.id))
+
+    return render_template('teacher/contentForm.html', form=form, curso=curso)
+
 
 
 
@@ -70,9 +94,53 @@ def crear_contenido(curso_id):
 @main.route('/curso/<int:curso_id>')
 def curso_detalle(curso_id):
     curso = Curso.query.get_or_404(curso_id)
-    profesor = Usuario.query.filter(Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'instructor').all()
+    
+    # Obtener el profesor asignado al curso
+    asignacion = db.session.query(asignaciones).filter_by(curso_id=curso_id, rol_asignado='instructor').first()
+    if asignacion:
+        profesor = Usuario.query.get(asignacion.usuario_id)  # Obtener el profesor por su ID
+    else:
+        profesor = None  # No hay profesor asignado
+    
+    # Obtener los estudiantes asignados al curso
     estudiantes = Usuario.query.filter(Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'estudiante').all()
-    return render_template('admin/class_admin.html',curso=curso, profesor=profesor, estudiantes=estudiantes)
+    
+    # Crear una instancia del formulario para agregar alumnos
+    form = AgregarAlumnoForm()
+    
+    # Obtener la lista de estudiantes disponibles para el formulario
+    lista_estudiantes = Usuario.query.filter_by(rol='estudiante').all()
+    form.alumno_id.choices = [(estudiante.id, estudiante.nombre_usuario) for estudiante in lista_estudiantes]
+
+    return render_template('admin/class_admin.html', curso=curso, profesor=profesor, estudiantes=estudiantes, form=form)
+
+
+
+@main.route('/curso/<int:curso_id>/cambiar_profesor', methods=['GET', 'POST'])
+def cambiar_profesor(curso_id):
+    curso = Curso.query.get_or_404(curso_id)
+    form = CambiarProfesorForm()
+
+    # Obtener la lista de usuarios que son profesores
+    profesores = Usuario.query.filter_by(rol='instructor').all()
+    form.profesor.choices = [(profesor.id, profesor.nombre_usuario) for profesor in profesores]
+
+    if form.validate_on_submit():
+        usuario_id = form.profesor.data  # Obtener el ID del profesor seleccionado
+        asignacion = db.session.query(asignaciones).filter_by(curso_id=curso.id, usuario_id=usuario_id).first()
+
+        if asignacion:
+            asignacion.rol_asignado = 'instructor'  # Cambiar el rol a instructor
+        else:
+            nueva_asignacion = asignaciones.insert().values(usuario_id=usuario_id, curso_id=curso.id, rol_asignado='instructor')
+            db.session.execute(nueva_asignacion)
+
+        db.session.commit()
+        flash('Profesor asignado exitosamente', 'success')
+        return redirect(url_for('main.curso_detalle', curso_id=curso.id))
+
+    return render_template('admin/profForm.html', form=form, curso=curso)
+
 
 # Ruta para eliminar un profesor
 @main.route('/curso/<int:curso_id>/eliminar_profesor', methods=['POST'])
@@ -84,21 +152,41 @@ def eliminar_profesor(curso_id):
         db.session.commit()
     return redirect(url_for('class_admin', curso_id=curso.id))
 
-# Ruta para cambiar un profesor
-@main.route('/curso/<int:curso_id>/cambiar_profesor', methods=['POST'])
-def cambiar_profesor(curso_id):
+
+@main.route('/curso/<int:curso_id>/agregar_alumno', methods=['GET', 'POST'])
+def agregar_alumno_curso(curso_id):
     curso = Curso.query.get_or_404(curso_id)
-    # Lógica para cambiar al profesor, podría ser con un select similar a los alumnos
-    return redirect(url_for('main.curso_detalle', curso_id=curso.id))
+    form = AgregarAlumnoForm()
+
+    # Obtener la lista de estudiantes disponibles
+    estudiantes = Usuario.query.filter_by(rol='estudiante').all()
+    form.alumno_id.choices = [(estudiante.id, estudiante.nombre_usuario) for estudiante in estudiantes]
+
+    if form.validate_on_submit():
+        alumno_id = form.alumno_id.data
+        # Lógica para agregar al alumno al curso
+        curso.usuarios.append(Usuario.query.get(alumno_id))
+        db.session.commit()
+        flash('Alumno agregado exitosamente', 'success')
+        return redirect(url_for('main.curso_detalle', curso_id=curso.id))
+
+    return render_template('admin/studForm.html', curso=curso, form=form)
+
 
 # Ruta para eliminar un alumno
 @main.route('/curso/<int:curso_id>/eliminar_alumno/<int:alumno_id>', methods=['POST'])
 def eliminar_alumno(curso_id, alumno_id):
-    asignacion = db.session.query(Curso).filter_by(curso_id=curso_id, usuario_id=alumno_id, rol_asignado='estudiante').first()
-    if asignacion:
-        db.session.delete(asignacion)
-        db.session.commit()
+    # Elimina el registro de la tabla intermedia
+    db.session.execute(asignaciones.delete().where(
+        asignaciones.c.curso_id == curso_id,
+        asignaciones.c.usuario_id == alumno_id
+    ))
+    db.session.commit()
+    flash('Alumno eliminado exitosamente', 'success')
     return redirect(url_for('main.curso_detalle', curso_id=curso_id))
+
+
+
 
 # Ruta para agregar un alumno
 @main.route('/curso/<int:curso_id>/agregar_alumno', methods=['POST'])

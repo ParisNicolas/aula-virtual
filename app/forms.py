@@ -33,3 +33,10 @@ class ContentForm(FlaskForm):
     enlace_externo = StringField('Enlace', validators=[Optional(), Length(max=100)])
     submit = SubmitField('Subir contenido')
 
+class CambiarProfesorForm(FlaskForm):
+    profesor = SelectField('Profesor', coerce=int, validators=[DataRequired()])
+    submit = SubmitField('Asignar Profesor')
+
+class AgregarAlumnoForm(FlaskForm):
+    alumno_id = SelectField('Seleccionar Alumno', validators=[DataRequired()])
+    submit = SubmitField('Agregar Alumno')

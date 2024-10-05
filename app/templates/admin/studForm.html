@@ -1,0 +1,38 @@
+{% extends "/bases_jinja/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h3>Agregar Alumno al Curso</h3>
+    <form action="{{ url_for('main.agregar_alumno_curso', curso_id=curso.id) }}" method="POST">
+        {{ form.hidden_tag() }}
+        <div class="input-group">
+            {{ form.alumno_id(class="form-control") }}
+            <div class="input-group-append">
+                {{ form.submit(class="btn btn-success") }}
+            </div>
+        </div>
+    </form>
+
+    <!-- Lista de alumnos inscritos -->
+    <h3>Alumnos del Curso</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alumno in curso.usuarios %}
+            <tr>
+                <td>{{ alumno.nombre_usuario }}</td>
+                <td>
+                    <form action="{{ url_for('main.eliminar_alumno', curso_id=curso.id, alumno_id=alumno.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

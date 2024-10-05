@@ -1,0 +1,16 @@
+{% extends "bases_jinja/base.html" %}
+
+{% block content %}
+<h1>Cambiar Profesor para {{ curso.nombre }}</h1>
+
+<form method="POST" action="{{ url_for('main.cambiar_profesor', curso_id=curso.id) }}">
+    {{ form.hidden_tag() }}
+    
+    <div class="form-group">
+        <label for="profesor">Cambiar Profesor:</label>
+        {{ form.profesor(class="form-control") }}
+    </div>
+
+    <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
+</form>
+{% endblock %}
