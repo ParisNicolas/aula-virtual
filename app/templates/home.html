@@ -1,11 +1,28 @@
-{% extends "base.html" %}
+{% extends "/bases_jinja/base.html" %}
 
 {% block content %}
-<h2 class="mt-3">Messi</h2>
-{% endblock %}
-
-{% block js %}
+<div class="container mt-4">
+    <div class="row">
+        {% for curso in cursos %}
+        <div class="col-md-3">
+            <div class="card mb-4 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title">{{ curso.nombre }}</h5>
+                    <p class="card-text">{{ curso.descripcion[:100] }}...</p>
+                    <a href="{{ url_for('main.curso_detalle', curso_id=curso.id)}}" class="btn btn-primary">Ver más</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}
 
 {% block css %}
+<style>
+    .card-img-top {
+        height: 150px;
+        object-fit: cover;
+    }
+</style>
 {% endblock %}

@@ -1,0 +1,72 @@
+{% extends "/bases_jinja/base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ curso.nombre }}</h2>
+    <a href="{{ url_for('main.crear_contenido', curso_id=curso.id) }}">Subir contenido</a>
+
+    <!-- Tabla del profesor -->
+    <h3>Profesor del Curso</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ profesor.nombre_usuario }}</td>
+                <td>
+                    <form action="{{ url_for('main.cambiar_profesor', curso_id=curso.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-warning">Cambiar</button>
+                    </form>
+                    <form action="{{ url_for('main.eliminar_profesor', curso_id=curso.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Tabla de alumnos -->
+    <h3>Alumnos del Curso</h3>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Formulario para agregar un nuevo alumno -->
+            <tr>
+                <td>
+                    <form action="{{ url_for('main.agregar_alumno', curso_id=curso.id) }}" method="POST">
+                        <div class="input-group">
+                            <select name="alumno_id" class="form-control">
+                                {% for estudiante in estudiantes %}
+                                <option value="{{ estudiante.id }}">{{ estudiante.nombre_usuario }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-success">Agregar Alumno</button>
+                        </div>
+                    </form>
+                </td>
+                <td></td>
+            </tr>
+            
+            <!-- Lista de alumnos inscritos -->
+            {% for alumno in alumnos %}
+            <tr>
+                <td>{{ alumno.nombre_usuario }}</td>
+                <td>
+                    <form action="{{ url_for('main.eliminar_alumno', curso_id=curso.id, alumno_id=alumno.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

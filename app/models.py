@@ -1,15 +1,14 @@
-from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from flask_login import UserMixin
 
 from app import db
 
-class Usuario(db.Model):
+class Usuario(UserMixin,db.Model):
     __tablename__ = 'usuarios'
     id = db.Column(db.Integer, primary_key=True)
     nombre_usuario = db.Column(db.String(80), unique=True, nullable=False)
-    correo = db.Column(db.String(120), unique=True, nullable=False)
-    contraseña_hash = db.Column(db.String(128), nullable=False)
+    contraseña_hash = db.Column(db.String(255), nullable=False)
     rol = db.Column(db.String(20), nullable=False, default='estudiante')  # 'admin', 'instructor', 'estudiante'
     cursos_asignados = db.relationship('Curso', secondary='asignaciones', back_populates='usuarios')
 
@@ -61,7 +60,7 @@ class Curso(db.Model):
 asignaciones = db.Table('asignaciones',
     db.Column('usuario_id', db.Integer, db.ForeignKey('usuarios.id'), primary_key=True),
     db.Column('curso_id', db.Integer, db.ForeignKey('cursos.id'), primary_key=True),
-    db.Column('rol_asignado', db.String(20), nullable=False)  # 'instructor', 'estudiante'
+    db.Column('rol_asignado', db.String(20), nullable=False)  # 'instructor', 'estudiante', 'admin'
 )
 
 # Modelo para Contenidos
@@ -72,7 +71,7 @@ class Contenido(db.Model):
     descripcion = db.Column(db.Text, nullable=True)
     tipo = db.Column(db.String(50), nullable=False)  # 'pdf', 'video', 'enlace'
     archivo = db.Column(db.String(200), nullable=True)  # Ruta al archivo si es un PDF o video
-    enlace_externo = db.Column(db.String(200), nullable=True)  # Enlace si es material externo
+    enlace_externo = db.Column(db.String(200), nullable=True)  # Enlace si es material 'externo'
     curso_id = db.Column(db.Integer, db.ForeignKey('cursos.id'), nullable=False)
     fecha_publicacion = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -87,14 +86,14 @@ class Evaluacion(db.Model):
     descripcion = db.Column(db.Text, nullable=True)
     curso_id = db.Column(db.Integer, db.ForeignKey('cursos.id'), nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    intentos = db.relationship('IntentoEvaluacion', backref='evaluacion', lazy=True)
+    intentos = db.relationship('Entrega', backref='evaluacion', lazy=True)
 
     def __repr__(self):
         return f'<Evaluacion {self.titulo}>'
 
 # Modelo para Intentos de Evaluaciones (Respuestas de estudiantes)
-class IntentoEvaluacion(db.Model):
-    __tablename__ = 'intentos_evaluacion'
+class Entrega(db.Model):
+    __tablename__ = 'Entregas'
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     evaluacion_id = db.Column(db.Integer, db.ForeignKey('evaluaciones.id'), nullable=False)
@@ -103,4 +102,4 @@ class IntentoEvaluacion(db.Model):
     fecha_intento = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return f'<IntentoEvaluacion Usuario: {self.usuario_id}, Evaluacion: {self.evaluacion_id}>'
+        return f'<Entrega Usuario: {self.usuario_id}, Evaluacion: {self.evaluacion_id}>'

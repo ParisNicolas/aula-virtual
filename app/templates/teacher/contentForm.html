@@ -1,0 +1,46 @@
+{% extends "bases_jinja/base.html" %}
+
+{% block content %}
+<h2>Subir Contenido</h2>
+<form method="POST" enctype="multipart/form-data" class="needs-validation border rounded p-3" novalidate>
+    {{ form.hidden_tag() }}
+
+    <!-- Campo de Título -->
+    <div class="mb-3">
+        <label for="titulo" class="form-label">{{ form.titulo.label }}</label>
+        {{ form.titulo(class_="form-control", id="titulo") }}
+        {% for error in form.titulo.errors %}
+            <div class="invalid-feedback d-block">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <!-- Campo de Descripción -->
+    <div class="mb-3">
+        <label for="descripcion" class="form-label">{{ form.descripcion.label }}</label>
+        {{ form.descripcion(class_="form-control", id="descripcion", rows=3) }}
+        {% for error in form.descripcion.errors %}
+            <div class="invalid-feedback d-block">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <!-- Campo de Archivo -->
+    <div class="mb-3">
+        <label for="archivo" class="form-label">{{ form.archivo.label }}</label>
+        {{ form.archivo(class_="form-control", id="archivo") }}
+        {% for error in form.archivo.errors %}
+            <div class="invalid-feedback d-block">{{ error }}</div>
+        {% endfor %}
+    </div>
+
+    <!-- Botón de Enviar -->
+    <div class="mb-3">
+        {{ form.submit(class_="btn btn-primary") }}
+    </div>
+</form>
+{% endblock %}
+
+{% block js %}
+{% endblock %}
+
+{% block css %}
+{% endblock %}
