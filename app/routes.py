@@ -4,7 +4,7 @@ from werkzeug.utils import secure_filename
 import os
 
 from app import db
-from app.models import Curso, Usuario, Contenido, asignaciones
+from app.models import Curso, Usuario, Contenido, asignaciones, Evaluacion
 from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm, CursoForm
 
 
@@ -83,6 +83,40 @@ def logout():
     logout_user()
     flash("Has cerrado session.", "success")
     return redirect(url_for("main.home"))
+
+@main.route('/tablon/<int:curso_id>')
+def tablon(curso_id):
+    curso = Curso.query.get_or_404(curso_id)
+    contenidos = Contenido.query.filter_by(curso_id=curso_id).all()
+    evaluaciones = Evaluacion.query.filter_by(curso_id=curso_id).all()
+    return render_template('tablon.html',curso=curso , contenidos=contenidos, evaluaciones=evaluaciones)
+
+
+# Ruta para ver el detalle de un curso (incluye profesor y alumnos)
+@main.route('/curso/<int:curso_id>')
+def curso_detalle(curso_id):
+    curso = Curso.query.get_or_404(curso_id)
+    
+    # Obtener el profesor asignado al curso
+    asignacion = db.session.query(asignaciones).filter_by(curso_id=curso_id, rol_asignado='instructor').first()
+    if asignacion:
+        profesor = Usuario.query.get(asignacion.usuario_id)  # Obtener el profesor por su ID
+    else:
+        profesor = None  # No hay profesor asignado
+    
+    # Obtener los estudiantes asignados al curso
+    estudiantes = Usuario.query.filter(Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'estudiante').all()
+    
+    # Crear una instancia del formulario para agregar alumnos
+    form = AgregarAlumnoForm()
+    
+    # Obtener la lista de estudiantes disponibles para el formulario
+    lista_estudiantes = Usuario.query.filter_by(rol='estudiante').all()
+    form.alumno_id.choices = [(estudiante.id, estudiante.nombre_usuario) for estudiante in lista_estudiantes]
+
+    return render_template('admin/class_admin.html', curso=curso, profesor=profesor, estudiantes=estudiantes, form=form)
+# poner esta ruta paar probar class_teacher teacher/class_teacher.html
+
 
 
 @main.route('/curso/<curso_id>/crear', methods=['GET', 'POST'])

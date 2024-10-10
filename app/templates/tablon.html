@@ -1,0 +1,56 @@
+{% extends "/bases_jinja/base_class.html" %}
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="text-center">Tablón de Tareas</h1>
+
+    <h2>Contenidos</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Descripción</th>
+                <th>Tipo</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for contenido in contenidos %}
+            <tr>
+                <td>{{ contenido.titulo }}</td>
+                <td>{{ contenido.descripcion }}</td>
+                <td>{{ contenido.tipo }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="3" class="text-center">No hay contenidos disponibles.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Evaluaciones</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for evaluacion in evaluaciones %}
+            <tr>
+                <td>{{ evaluacion.titulo }}</td>
+                <td>{{ evaluacion.descripcion }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="2" class="text-center">No hay evaluaciones disponibles.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
