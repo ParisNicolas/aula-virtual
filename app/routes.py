@@ -87,6 +87,7 @@ def curso_detalle(curso_id):
     form.alumno_id.choices = [(estudiante.id, estudiante.nombre_usuario) for estudiante in lista_estudiantes]
 
     return render_template('admin/class_admin.html', curso=curso, profesor=profesor, estudiantes=estudiantes, form=form)
+# poner esta ruta paar probar class_teacher teacher/class_teacher.html
 
 
 
