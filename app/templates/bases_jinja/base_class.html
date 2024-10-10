@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Mi Página{% endblock %}</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* CSS personalizado */
+        body {
+            background-color: #ffefd8; /* Fondo claro */
+        }
+        .navbar {
+            background-color: #52575b; /* Color gris para el navbar */
+        }
+        .navbar-nav {
+            flex-direction: row; /* Alinear los elementos en fila */
+            margin: auto; /* Centrar los enlaces en el navbar */
+        }
+        .nav-link {
+            margin-right: 15px; /* Espaciado entre enlaces */
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <h2>{{ curso.nombre }}</h2>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav mx-auto"> <!-- mx-auto para centrar los elementos -->
+                <li class="nav-item">
+                    <a href="{{ url_for('main.tablon', curso_id=curso.id) }}" class="btn btn-secondary">Tablon</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ url_for('main.curso_detalle', curso_id=curso.id) }}" class="btn btn-secondary">Funv</a>
+                </li>
+                
+            </ul>
+        </div>
+        <div class="d-flex justify-content-center">
+            <a href="{{ url_for('main.home') }}" class="btn btn-danger btn-volver">Volver</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        {% block content %}
+        <!-- Aquí se cargará el contenido de las otras páginas -->
+        {% endblock %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

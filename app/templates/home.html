@@ -9,7 +9,7 @@
                 <div class="card-body">
                     <h5 class="card-title">{{ curso.nombre }}</h5>
                     <p class="card-text">{{ curso.descripcion[:100] }}...</p>
-                    <a href="{{ url_for('main.curso_detalle', curso_id=curso.id)}}" class="btn btn-primary">Ver más</a>
+                    <a href="{{ url_for('main.tablon', curso_id=curso.id) }}" class="btn btn-primary">Ver más</a>
                 </div>
             </div>
         </div>
