@@ -1,11 +1,11 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app
 from flask_login import login_required, login_user, logout_user
 from werkzeug.utils import secure_filename
 import os
 
 from app import db
 from app.models import Curso, Usuario, Contenido, asignaciones
-from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm
+from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm, CursoForm
 
 
 main = Blueprint('main', __name__, template_folder='templates')
@@ -16,6 +16,37 @@ def home():
     return render_template('home.html', cursos=cursos)
 
 
+# Crear una clase
+@main.route('/crear_curso', methods=['GET', 'POST'])
+def crear_curso():
+    form = CursoForm()
+
+    # Filtrar usuarios según su rol
+    estudiantes = Usuario.query.filter_by(rol='estudiante').all()
+    instructores = Usuario.query.filter_by(rol='instructor').all()
+
+    # Crear las opciones para el SelectMultipleField
+    form.usuarios.choices = [(usuario.id, f"{usuario.nombre_usuario} (Estudiante)") for usuario in estudiantes] + \
+                            [(usuario.id, f"{usuario.nombre_usuario} (Instructor)") for usuario in instructores]
+
+    if form.validate_on_submit():
+        # Crear el nuevo curso con los datos del formulario
+        nuevo_curso = Curso(nombre=form.nombre.data, descripcion=form.descripcion.data)
+
+        # Asignar los usuarios seleccionados al curso
+        usuarios_seleccionados = Usuario.query.filter(Usuario.id.in_(form.usuarios.data)).all()
+        nuevo_curso.usuarios.extend(usuarios_seleccionados)
+
+        db.session.add(nuevo_curso)
+        db.session.commit()
+        flash('Curso creado con éxito', 'success')
+        return redirect(url_for('main.home'))
+
+    return render_template('admin/crear_curso.html', form=form)
+
+
+
+#------- LOGIN ---------
 #Logeo
 @main.route('/login', methods=['GET', 'POST'])
 def login():
@@ -53,8 +84,6 @@ def logout():
     flash("Has cerrado session.", "success")
     return redirect(url_for("main.home"))
 
-import os
-from flask import current_app
 
 @main.route('/curso/<curso_id>/crear', methods=['GET', 'POST'])
 def crear_contenido(curso_id):
@@ -90,17 +119,13 @@ def crear_contenido(curso_id):
 
 
 
-# Ruta para ver el detalle de un curso (incluye profesor y alumnos)
+# Contenido de un curso (incluye profesor y alumnos)
 @main.route('/curso/<int:curso_id>')
 def curso_detalle(curso_id):
     curso = Curso.query.get_or_404(curso_id)
     
     # Obtener el profesor asignado al curso
-    asignacion = db.session.query(asignaciones).filter_by(curso_id=curso_id, rol_asignado='instructor').first()
-    if asignacion:
-        profesor = Usuario.query.get(asignacion.usuario_id)  # Obtener el profesor por su ID
-    else:
-        profesor = None  # No hay profesor asignado
+    profesores = Usuario.query.filter(Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'instructor').all()
     
     # Obtener los estudiantes asignados al curso
     estudiantes = Usuario.query.filter(Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'estudiante').all()
@@ -112,7 +137,7 @@ def curso_detalle(curso_id):
     lista_estudiantes = Usuario.query.filter_by(rol='estudiante').all()
     form.alumno_id.choices = [(estudiante.id, estudiante.nombre_usuario) for estudiante in lista_estudiantes]
 
-    return render_template('admin/class_admin.html', curso=curso, profesor=profesor, estudiantes=estudiantes, form=form)
+    return render_template('admin/class_admin.html', curso=curso, profesores=profesores, estudiantes=estudiantes, form=form)
 
 
 
@@ -142,15 +167,24 @@ def cambiar_profesor(curso_id):
     return render_template('admin/profForm.html', form=form, curso=curso)
 
 
-# Ruta para eliminar un profesor
-@main.route('/curso/<int:curso_id>/eliminar_profesor', methods=['POST'])
-def eliminar_profesor(curso_id):
+# Eliminar un profesor de un curso
+@main.route('/curso/<int:curso_id>/eliminar_profesor/<int:profe_id>', methods=['POST'])
+def eliminar_profesor(curso_id, profe_id):
     curso = Curso.query.get_or_404(curso_id)
-    asignacion = db.session.query(Curso).filter_by(curso_id=curso.id, rol_asignado='instructor').first()
-    if asignacion:
-        db.session.delete(asignacion)
+    instructor = Usuario.query.filter_by(id=profe_id, rol='instructor').first()
+
+    if not instructor:
+        flash('Instructor no encontrado', 'error')
+        return redirect(url_for('curso_detalle', curso_id=curso_id))
+    
+    if instructor in curso.usuarios:
+        curso.usuarios.remove(instructor)
         db.session.commit()
-    return redirect(url_for('class_admin', curso_id=curso.id))
+        flash('Instructor eliminado del curso con éxito', 'success')
+    else:
+        flash('El instructor no está asignado a este curso', 'error')
+
+    return redirect(url_for('curso_detalle', curso_id=curso.id))
 
 
 @main.route('/curso/<int:curso_id>/agregar_alumno', methods=['GET', 'POST'])
@@ -200,11 +234,6 @@ def agregar_alumno(curso_id):
 
 
 #-----------SECCION 2---------
-
-#Mostrar el contenido de un curso
-@main.route('/curso/<curso_id>')
-def ver_curso(curso_id):
-    return render_template('algo.html')
 
 
 #Eliminar un contenido (solo profesores)

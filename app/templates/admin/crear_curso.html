@@ -1,0 +1,44 @@
+{% extends "bases_jinja/base.html" %}
+
+{% block content %}
+<div class="mt-5 border rounded shadow p-3  ">
+    <h2>Crear Curso</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+    
+        <!-- Campo de Nombre -->
+        <div class="mb-3 row">
+            <div class="col-4">
+                {{ form.nombre.label(class="form-label") }}
+                {{ form.nombre(class_="form-control", id="nombre") }}
+                {% for error in form.nombre.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+        
+            <!-- Campo de Descripción -->
+            <div class="col-8 border-start">
+                {{ form.descripcion.label(class="form-label") }}
+                {{ form.descripcion(class_="form-control", id="descripcion", rows=3) }}
+                {% for error in form.descripcion.errors %}
+                    <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+            </div>
+        </div>
+    
+        <!-- Campo de Usuarios (Select Múltiple) -->
+        <div class="mb-3">
+            {{ form.usuarios.label(class="form-label") }}
+            {{ form.usuarios(class_="form-select", id="usuarios", multiple=True) }}
+            {% for error in form.usuarios.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+            {% endfor %}
+        </div>
+    
+        <!-- Botón de Guardar -->
+        <div class="mb-3">
+            {{ form.submit(class_="btn btn-primary") }}
+        </div>
+    </form>
+</div>
+{% endblock %}

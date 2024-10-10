@@ -1,9 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, SubmitField, FileField, SelectField, TextAreaField
+from wtforms import PasswordField, StringField, SubmitField, FileField, SelectField, TextAreaField, SelectMultipleField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional
 from flask_wtf.file import FileAllowed, FileRequired
 from app.models import Usuario
-
 
 class LoginForm(FlaskForm):
     name = StringField("Nombre", validators=[DataRequired()])
@@ -23,6 +22,12 @@ class RegisterForm(FlaskForm):
             raise ValidationError('Ese nombre de usuario ya existe. Por favor, elige otro.')
 
 
+class CursoForm(FlaskForm):
+    nombre = StringField('Nombre del Curso', validators=[DataRequired(), Length(max=100)])
+    descripcion = TextAreaField('Descripción', validators=[Optional(), Length(max=500)])
+    usuarios = SelectMultipleField('Asignar Usuarios', coerce=int)  # Para asignar usuarios (estudiantes/instructores)
+    submit = SubmitField('Guardar')
+
 class ContentForm(FlaskForm):
     titulo = StringField('Título', validators=[DataRequired(), Length(max=100)])
     descripcion = TextAreaField('Descripción', validators=[Optional(), Length(max=500)])
@@ -32,6 +37,7 @@ class ContentForm(FlaskForm):
     ])
     enlace_externo = StringField('Enlace', validators=[Optional(), Length(max=100)])
     submit = SubmitField('Subir contenido')
+
 
 class CambiarProfesorForm(FlaskForm):
     profesor = SelectField('Profesor', coerce=int, validators=[DataRequired()])

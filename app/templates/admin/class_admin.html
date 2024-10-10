@@ -6,7 +6,7 @@
 
     <!-- Tabla del profesor -->
     <h3>Profesor del Curso</h3>
-    <table class="table table-bordered">
+    <table class="table table-bordered mb-3">
         <thead>
             <tr>
                 <th>Nombre</th>
@@ -14,28 +14,30 @@
             </tr>
         </thead>
         <tbody>
+            {% if profesores %}
+            {% for profesor in profesores%}
             <tr>
-                {% if profesor %}
-                    <td>{{ profesor.nombre_usuario }}</td>
-                    <td>
-                        <form action="{{ url_for('main.cambiar_profesor', curso_id=curso.id) }}" method="POST" class="d-inline">
-                            <button type="submit" class="btn btn-warning">Cambiar</button>
-                        </form>
-                    </td>
-                {% else %}
-                    <td>No hay profesor asignado</td>
-                    <td>
-                        <form action="{{ url_for('main.cambiar_profesor', curso_id=curso.id) }}" method="POST" class="d-inline">
-                            <button type="submit" class="btn btn-warning">Asignar Profesor</button>
-                        </form>
-                    </td>
-                {% endif %}
+                <td>{{ profesor.nombre_usuario }}</td>
+                <td>
+                    <form action="{{ url_for('main.eliminar_profesor', curso_id=curso.id, profe_id=profesor.id) }}" method="POST" class="d-inline">
+                        <button type="submit" class="btn btn-danger">Eliminar</button>
+                    </form>
+                </td>
             </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+                <td>No hay profesor asignado</td>
+            </tr>
+            {% endif %}
         </tbody>
     </table>
-
+    <form action="{{ url_for('main.cambiar_profesor', curso_id=curso.id) }}" method="POST" class="d-inline">
+        <button type="submit" class="btn btn-warning">Asignar Profesor</button>
+    </form>
+    
     <!-- Tabla de alumnos -->
-    <h3>Alumnos del Curso</h3>
+    <h3 class="mt-5">Alumnos del Curso</h3>
     <form action="{{ url_for('main.agregar_alumno_curso', curso_id=curso.id) }}" method="POST">
         {{ form.hidden_tag() }}
         <div class="input-group mb-3">

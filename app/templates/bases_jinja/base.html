@@ -53,18 +53,18 @@
     </style>
 </head>
 <body>
-    <nav class="d-flex justify-content-evenly">
+    <nav class="d-flex justify-content-evenly align-items-center">
         <h2 class="text-info">
             {% if current_user.is_authenticated %}
             <i class="fa-regular fa-user me-2"></i>
+            {{current_user.nombre_usuario + " (" + current_user.rol + ")"}}
             {% endif %}
-            {{current_user.nombre_usuario}}
         </h2>
-        <div class="">
+        <div>
             <a href="{{ url_for('main.home')}}">Inicio</a>
 
             {% if current_user.is_authenticated and current_user.rol == "admin" %}
-            <a href="">Gestion</a>
+            <a href="{{ url_for('main.crear_curso')}}">Crear curso</a>
             {% endif %}
         </div>
         {% if current_user.is_authenticated %}

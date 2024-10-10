@@ -49,9 +49,9 @@ class Curso(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     descripcion = db.Column(db.Text, nullable=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    usuarios = db.relationship('Usuario', secondary='asignaciones', back_populates='cursos_asignados')
-    contenidos = db.relationship('Contenido', backref='curso', lazy=True)
-    evaluaciones = db.relationship('Evaluacion', backref='curso', lazy=True)
+    usuarios = db.relationship('Usuario', secondary='asignaciones', back_populates='cursos_asignados', cascade="all, delete")
+    contenidos = db.relationship('Contenido', backref='curso', lazy=True, cascade='all, delete-orphan')
+    evaluaciones = db.relationship('Evaluacion', backref='curso', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Curso {self.nombre}>'
@@ -86,7 +86,7 @@ class Evaluacion(db.Model):
     descripcion = db.Column(db.Text, nullable=True)
     curso_id = db.Column(db.Integer, db.ForeignKey('cursos.id'), nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    intentos = db.relationship('Entrega', backref='evaluacion', lazy=True)
+    intentos = db.relationship('Entrega', backref='evaluacion', lazy=True, cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Evaluacion {self.titulo}>'
