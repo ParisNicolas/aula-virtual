@@ -6,7 +6,7 @@ import os
 
 from app import db
 from app.models import Curso, Usuario, Contenido, asignaciones, Evaluacion
-from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm, CursoForm
+from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm, CursoForm, EVAForm
 
 
 main = Blueprint('main', __name__, template_folder='templates')
@@ -152,6 +152,11 @@ def tablon(curso_id):
     evaluaciones = Evaluacion.query.filter_by(curso_id=curso_id).all()
     return render_template('tablon.html',curso=curso , contenidos=contenidos, evaluaciones=evaluaciones)
 
+#Subir una respuesta a una evaluacion
+@main.route('/evaluacion/<evaluacion_id>', methods=['POST'])
+def subir_respuesta(evaluacion_id):
+    return render_template('algo.html')
+
 
 #------- TABLON DE INSTRUCTORES ---------
 
@@ -187,6 +192,29 @@ def crear_contenido(curso_id):
         return redirect(url_for('main.tablon', curso_id=curso.id))
 
     return render_template('teacher/contentForm.html', form=form, curso=curso)
+
+
+@main.route('/curso/<curso_id>/crear_Evaluacion', methods=['GET', 'POST'])
+@role_required(['instructor', 'admin'])
+@pertenece_al_curso
+def crear_Evaluacion(curso_id):
+    curso = Curso.query.get_or_404(curso_id)
+    form = EVAForm()
+    if form.validate_on_submit():
+        # Crea un nuevo contenido en la base de datos
+        nueva_evaluacion = Evaluacion(
+            titulo=form.titulo.data,
+            descripcion=form.descripcion.data,
+            fecha_entrega=form.fecha_entrega.data,
+            curso_id=curso.id
+        )
+        db.session.add(nueva_evaluacion)
+        db.session.commit()
+
+        flash('Contenido subido exitosamente', 'success')
+        return redirect(url_for('main.tablon', curso_id=curso.id))
+
+    return render_template('teacher/EVAForm.html', form=form, curso=curso)
 
 
 #------- TABLON DE ADMIN ---------
@@ -234,33 +262,6 @@ def curso_detalle(curso_id):
                            formProfe=formProfe,
                            )
 
-@main.route('/curso/<int:curso_id>/cambiar_profesor', methods=['GET', 'POST'])
-@role_required(['admin'])
-def cambiar_profesor(curso_id):
-    curso = Curso.query.get_or_404(curso_id)
-    form = CambiarProfesorForm()
-
-    # Obtener la lista de usuarios que son profesores
-    profesores = Usuario.query.filter_by(rol='instructor').all()
-    form.profesor.choices = [(profesor.id, profesor.nombre_usuario) for profesor in profesores]
-
-    if form.validate_on_submit():
-        usuario_id = form.profesor.data  # Obtener el ID del profesor seleccionado
-        asignacion = db.session.query(asignaciones).filter_by(curso_id=curso.id, usuario_id=usuario_id).first()
-
-        if asignacion:
-            asignacion.rol_asignado = 'instructor'  # Cambiar el rol a instructor
-        else:
-            nueva_asignacion = asignaciones.insert().values(usuario_id=usuario_id, curso_id=curso.id, rol_asignado='instructor')
-            db.session.execute(nueva_asignacion)
-
-        db.session.commit()
-        flash('Profesor asignado exitosamente', 'success')
-        return redirect(url_for('main.curso_detalle', curso_id=curso.id))
-
-    return render_template('admin/profForm.html', form=form, curso=curso)
-
-
 # Eliminar un profesor de un curso
 @main.route('/curso/<int:curso_id>/eliminar_profesor/<int:profe_id>', methods=['POST'])
 @role_required(['admin'])
@@ -282,27 +283,6 @@ def eliminar_profesor(curso_id, profe_id):
     return redirect(url_for('main.curso_detalle', curso_id=curso.id))
 
 
-@main.route('/curso/<int:curso_id>/agregar_alumno', methods=['GET', 'POST'])
-@role_required(['admin'])
-def agregar_alumno_curso(curso_id):
-    curso = Curso.query.get_or_404(curso_id)
-    form = AgregarAlumnoForm()
-
-    # Obtener la lista de estudiantes disponibles
-    estudiantes = Usuario.query.filter_by(rol='estudiante').all()
-    form.alumno_id.choices = [(estudiante.id, estudiante.nombre_usuario) for estudiante in estudiantes]
-
-    if form.validate_on_submit():
-        alumno_id = form.alumno_id.data
-        # Lógica para agregar al alumno al curso
-        curso.usuarios.append(Usuario.query.get(alumno_id))
-        db.session.commit()
-        flash('Alumno agregado exitosamente', 'success')
-        return redirect(url_for('main.curso_detalle', curso_id=curso.id))
-
-    return render_template('admin/studForm.html', curso=curso, form=form)
-
-
 # Ruta para eliminar un alumno
 @main.route('/curso/<int:curso_id>/eliminar_alumno/<int:alumno_id>', methods=['POST'])
 @role_required(['admin'])
@@ -315,12 +295,3 @@ def eliminar_alumno(curso_id, alumno_id):
     db.session.commit()
     flash('Alumno eliminado exitosamente', 'success')
     return redirect(url_for('main.curso_detalle', curso_id=curso_id))
-
-
-
-#-----------SECCION 2---------
-
-#Subir una respuesta a una evaluacion
-@main.route('/evaluacion/<evaluacion_id>', methods=['POST'])
-def subir_respuesta(evaluacion_id):
-    return render_template('algo.html')

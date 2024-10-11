@@ -20,7 +20,7 @@ def create_app():
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['DEBUG'] = True
     app.config['UPLOAD_FOLDER'] = 'static/uploads/'  # Directorio donde se guardarán las imágenes
-    app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Tamaño máximo del archivo (16 MB en este caso)
+    app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # Tamaño máximo del archivo (16 MB en este caso)
     
     """Inicializacion"""
     db.init_app(app)
@@ -33,7 +33,7 @@ def create_app():
 
     @app.errorhandler(403)
     def forbidden(e):
-        return render_template('public/403.html'), 403
+        return render_template('errors/403.html'), 403
     
     """Get user in each request for more info"""
     from app.models import Usuario

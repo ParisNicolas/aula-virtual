@@ -1,78 +1,76 @@
 {% extends "/bases_jinja/base_class.html" %}
 {% block content %}
-<h1 class="text-center">Bienvenido</h1>
-
-<div class="container mt-4">
-
-    <!-- Tabla del profesor -->
-    <h3>Profesor del Curso</h3>
-    <table class="table table-bordered mb-3">
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% if profesores %}
-            {% for profesor in profesores%}
-            <tr>
-                <td>{{ profesor.nombre_usuario }}</td>
-                <td>
-                    <form action="{{ url_for('main.eliminar_profesor', curso_id=curso.id, profe_id=profesor.id) }}" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-            {% else %}
-            <tr>
-                <td>No hay profesor asignado</td>
-            </tr>
-            {% endif %}
-        </tbody>
-    </table>
-    <form method="POST">
-        {{ formProfe.hidden_tag() }}
-        <div class="input-group mb-3">
-            {{ formProfe.profesor(class="form-control") }}
-            <div class="input-group-append">
-                {{ formProfe.submit(class="btn btn-success") }}
+<div class="container">
+    <h1 class="text-center">Bienvenido</h1>
+        <!-- Tabla del profesor -->
+        <h3>Profesor del Curso</h3>
+        <table class="table table-bordered mb-3">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if profesores %}
+                {% for profesor in profesores%}
+                <tr>
+                    <td>{{ profesor.nombre_usuario }}</td>
+                    <td>
+                        <form action="{{ url_for('main.eliminar_profesor', curso_id=curso.id, profe_id=profesor.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% else %}
+                <tr>
+                    <td>No hay profesor asignado</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+        <form method="POST">
+            {{ formProfe.hidden_tag() }}
+            <div class="input-group mb-3">
+                {{ formProfe.profesor(class="form-control") }}
+                <div class="input-group-append">
+                    {{ formProfe.submit(class="btn btn-success") }}
+                </div>
             </div>
-        </div>
-    </form>
-    
-    <!-- Tabla de alumnos -->
-    <h3 class="mt-5">Alumnos del Curso</h3>
-    <form method="POST">
-        {{ formAlumn.hidden_tag() }}
-        <div class="input-group mb-3">
-            {{ formAlumn.alumno_id(class="form-control") }}
-            <div class="input-group-append">
-                {{ formAlumn.submit(class="btn btn-success") }}
+        </form>
+        
+        <!-- Tabla de alumnos -->
+        <h3 class="mt-5">Alumnos del Curso</h3>
+        <form method="POST">
+            {{ formAlumn.hidden_tag() }}
+            <div class="input-group mb-3">
+                {{ formAlumn.alumno_id(class="form-control") }}
+                <div class="input-group-append">
+                    {{ formAlumn.submit(class="btn btn-success") }}
+                </div>
             </div>
-        </div>
-    </form>
-    
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>Nombre</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for alumno in estudiantes %}
-            <tr>
-                <td>{{ alumno.nombre_usuario }}</td>
-                <td>
-                    <form action="{{ url_for('main.eliminar_alumno', curso_id=curso.id, alumno_id=alumno.id) }}" method="POST" class="d-inline">
-                        <button type="submit" class="btn btn-danger">Eliminar</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        </form>
+        
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for alumno in estudiantes %}
+                <tr>
+                    <td>{{ alumno.nombre_usuario }}</td>
+                    <td>
+                        <form action="{{ url_for('main.eliminar_alumno', curso_id=curso.id, alumno_id=alumno.id) }}" method="POST" class="d-inline">
+                            <button type="submit" class="btn btn-danger">Eliminar</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
 </div>
 {% endblock %}

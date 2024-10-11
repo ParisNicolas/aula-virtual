@@ -86,7 +86,7 @@ class Evaluacion(db.Model):
     descripcion = db.Column(db.Text, nullable=True)
     curso_id = db.Column(db.Integer, db.ForeignKey('cursos.id'), nullable=False)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    intentos = db.relationship('Entrega', backref='evaluacion', lazy=True, cascade='all, delete-orphan')
+    fecha_entrega = db.Column(db.DateTime, nullable=False)
 
     def __repr__(self):
         return f'<Evaluacion {self.titulo}>'
@@ -97,7 +97,7 @@ class Entrega(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     evaluacion_id = db.Column(db.Integer, db.ForeignKey('evaluaciones.id'), nullable=False)
-    respuestas = db.Column(db.Text, nullable=False)  # Respuestas de los estudiantes
+    respuestas = db.Column(db.Text, nullable=False) # Respuestas de los estudiantes 
     calificacion = db.Column(db.Float, nullable=True)  # Calificación de la evaluación (automática o manual)
     fecha_intento = db.Column(db.DateTime, default=datetime.utcnow)
 

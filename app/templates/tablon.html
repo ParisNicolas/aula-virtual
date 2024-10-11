@@ -1,56 +1,119 @@
 {% extends "/bases_jinja/base_class.html" %}
 {% block content %}
+<h1 class="text-center mt-4">Tablón de Tareas</h1>
+<div class="container-fluid mt-4 d-flex">
+    <div class="left-panel m-3">
+        <h2>Contenidos</h2>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th scope="col">Título</th>
+                    <th scope="col">Descripción</th>
+                    <th scope="col">Fecha de Subida</th>
+                    <th scope="col">Archivo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contenido in contenidos %}
+                <tr>
+                    <!-- Datos extra del contenido -->
+                    <td colspan="4">
+                        <h5>{{ contenido.titulo }}</h5>
+                        <p>{{ contenido.descripcion }}</p>
+                        {% if contenido.enlace_externo %}
+                        <a href="{{ contenido.enlace_externo }}">{{ contenido.enlace_externo }}</a>
+                        {% endif %}
+                        <small class="text-muted">Fecha de subida: {{ contenido.fecha_publicacion.strftime('%d-%m-%Y') }}</small>
+                    </td>
+                </tr>
+                <tr>
+                    <!-- Archivo multimedia -->
+                    <td colspan="4" class="text-center">
+                        <!-- Mostrar imagen -->
+                        {% if contenido.archivo.endswith(('.png', '.jpg', '.jpeg', '.gif')) %}
+                            <img src="{{ url_for('static', filename='uploads/' ~ contenido.archivo) }}" alt="{{ contenido.titulo }}" class="img-fluid">
+        
+                        <!-- Mostrar audio -->
+                        {% elif contenido.archivo.endswith('.mp3') %}
+                            <audio controls>
+                                <source src="{{ url_for('static', filename='uploads/' ~ contenido.archivo) }}" type="audio/mpeg">
+                                Tu navegador no soporta el elemento de audio.
+                            </audio>
+        
+                        <!-- Mostrar video -->
+                        {% elif contenido.archivo.endswith('.mp4') %}
+                            <video controls class="w-100">
+                                <source src="{{ url_for('static', filename='uploads/' ~ contenido.archivo) }}" type="video/mp4">
+                                Tu navegador no soporta el elemento de video.
+                            </video>
+        
+                        <!-- Mostrar PDF -->
+                        {% elif contenido.archivo.endswith('.pdf') %}
+                            <a href="{{ url_for('static', filename='uploads/' ~ contenido.archivo) }}" target="_blank">Ver PDF</a>
+        
+                        <!-- Enlace a contenido externo -->
+                        {% elif contenido.archivo.startswith('http') %}
+                            <a href="{{ contenido.archivo }}" target="_blank">Ver enlace externo</a>
+        
+                        <!-- Otros archivos descargables -->
+                        {% else %}
+                            <a href="{{ url_for('static', filename='uploads/' ~ contenido.archivo) }}" download>Descargar archivo</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center">No hay contenidos disponibles.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-<div class="container mt-4">
-    <h1 class="text-center">Tablón de Tareas</h1>
-
-    <h2>Contenidos</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Título</th>
-                <th>Descripción</th>
-                <th>Tipo</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for contenido in contenidos %}
-            <tr>
-                <td>{{ contenido.titulo }}</td>
-                <td>{{ contenido.descripcion }}</td>
-                <td>{{ contenido.tipo }}</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="3" class="text-center">No hay contenidos disponibles.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <h2>Evaluaciones</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Título</th>
-                <th>Descripción</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for evaluacion in evaluaciones %}
-            <tr>
-                <td>{{ evaluacion.titulo }}</td>
-                <td>{{ evaluacion.descripcion }}</td>
-            </tr>
-            {% else %}
-            <tr>
-                <td colspan="2" class="text-center">No hay evaluaciones disponibles.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="right-panel m-3">
+        <h2>Evaluaciones</h2>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Descripción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for evaluacion in evaluaciones %}
+                <tr>
+                    <td>{{ evaluacion.titulo }}</td>
+                    <td>{{ evaluacion.descripcion }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="2" class="text-center">No hay evaluaciones disponibles.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
+{% endblock %}
 
-<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+{% block css %}
+<style>
+    .left-panel, .right-panel {
+        flex: 1; /* Ambas secciones ocupan el mismo espacio */
+        overflow-y: auto; /* Habilitar scroll vertical */
+        padding: 20px; /* Espaciado interno */
+        box-sizing: border-box; /* Incluir padding en el tamaño total */
+
+        border-radius: 8px;
+        background: #ddcfd1;
+        box-shadow:  9px 9px 18px #aa9fa1,
+                    -9px -9px 18px #ffffff;
+    }
+    .left-panel {
+        background-color: #f8f9fa; /* Color de fondo para el panel izquierdo */
+    }
+    .right-panel {
+        background-color: #e9ecef; /* Color de fondo para el panel derecho */
+    }
+</style>
 {% endblock %}

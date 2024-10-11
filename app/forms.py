@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, SubmitField, FileField, SelectField, TextAreaField, SelectMultipleField
+from wtforms import PasswordField, StringField, SubmitField, FileField, SelectField, TextAreaField, SelectMultipleField, DateField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional
 from flask_wtf.file import FileAllowed, FileRequired
 from app.models import Usuario
@@ -38,6 +38,12 @@ class ContentForm(FlaskForm):
     enlace_externo = StringField('Enlace', validators=[Optional(), Length(max=100)])
     submit = SubmitField('Subir contenido')
 
+
+class EVAForm(FlaskForm):
+    titulo = StringField('Título', validators=[DataRequired(), Length(max=100)])
+    descripcion = TextAreaField('Descripción', validators=[Optional(), Length(max=500)])
+    fecha_entrega = DateField('Fecha de Entrega', format='%Y-%m-%d')
+    submit = SubmitField('Subir evaluacion')
 
 class CambiarProfesorForm(FlaskForm):
     profesor = SelectField('Profesor', coerce=int, validators=[DataRequired()])

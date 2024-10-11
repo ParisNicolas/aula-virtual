@@ -22,6 +22,7 @@
             margin-left: 15px;
         }
     </style>
+    {% block css %}{% endblock %}
 </head>
 <body>
     <!-- Navbar -->
@@ -39,10 +40,13 @@
                 <li class="nav-item px-2">
                     <a href="{{ url_for('main.crear_contenido', curso_id=curso.id) }}" class="btn btn-secondary">Subir contenido</a>
                 </li>
+                <li class="nav-item px-2">
+                    <a href="{{ url_for('main.crear_Evaluacion', curso_id=curso.id) }}" class="btn btn-secondary">Subir evaluacion</a>
+                </li>
                 {% endif %}
                 {% if current_user.rol == "admin" %}
                 <li class="nav-item px-2">
-                    <a href="{{ url_for('main.curso_detalle', curso_id=curso.id) }}" class="btn btn-secondary">Funv</a>
+                    <a href="{{ url_for('main.curso_detalle', curso_id=curso.id) }}" class="btn btn-secondary">Ajustes</a>
                 </li>
                 {% endif %}
             </ul>
@@ -53,11 +57,9 @@
     </nav>
 
     <!-- Main Content -->
-    <div class="container mt-4">
-        {% block content %}
-        <!-- Aquí se cargará el contenido de las otras páginas -->
-        {% endblock %}
-    </div>
+    {% block content %}
+    <!-- Aquí se cargará el contenido de las otras páginas -->
+    {% endblock %}
 
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
