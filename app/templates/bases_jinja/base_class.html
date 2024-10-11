@@ -31,14 +31,20 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav mx-auto"> <!-- mx-auto para centrar los elementos -->
-                <li class="nav-item">
+            <ul class="navbar-nav"> <!-- mx-auto para centrar los elementos -->
+                <li class="nav-item px-2">
                     <a href="{{ url_for('main.tablon', curso_id=curso.id) }}" class="btn btn-secondary">Tablon</a>
                 </li>
-                <li class="nav-item">
+                {% if current_user.rol == "instructor" or current_user.rol == "admin" %}
+                <li class="nav-item px-2">
+                    <a href="{{ url_for('main.crear_contenido', curso_id=curso.id) }}" class="btn btn-secondary">Subir contenido</a>
+                </li>
+                {% endif %}
+                {% if current_user.rol == "admin" %}
+                <li class="nav-item px-2">
                     <a href="{{ url_for('main.curso_detalle', curso_id=curso.id) }}" class="btn btn-secondary">Funv</a>
                 </li>
-                
+                {% endif %}
             </ul>
         </div>
         <div class="d-flex justify-content-center">

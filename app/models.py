@@ -49,7 +49,7 @@ class Curso(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     descripcion = db.Column(db.Text, nullable=True)
     fecha_creacion = db.Column(db.DateTime, default=datetime.utcnow)
-    usuarios = db.relationship('Usuario', secondary='asignaciones', back_populates='cursos_asignados', cascade="all, delete")
+    usuarios = db.relationship('Usuario', secondary='asignaciones', back_populates='cursos_asignados')
     contenidos = db.relationship('Contenido', backref='curso', lazy=True, cascade='all, delete-orphan')
     evaluaciones = db.relationship('Evaluacion', backref='curso', lazy=True, cascade='all, delete-orphan')
 
@@ -58,8 +58,8 @@ class Curso(db.Model):
 
 # Tabla intermedia para la relación muchos a muchos entre Usuarios y Cursos (Asignaciones)
 asignaciones = db.Table('asignaciones',
-    db.Column('usuario_id', db.Integer, db.ForeignKey('usuarios.id'), primary_key=True),
-    db.Column('curso_id', db.Integer, db.ForeignKey('cursos.id'), primary_key=True),
+    db.Column('usuario_id', db.Integer, db.ForeignKey('usuarios.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('curso_id', db.Integer, db.ForeignKey('cursos.id', ondelete='CASCADE'), primary_key=True),
     db.Column('rol_asignado', db.String(20), nullable=False)  # 'instructor', 'estudiante', 'admin'
 )
 

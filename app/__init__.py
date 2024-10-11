@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -31,6 +31,9 @@ def create_app():
     from app.routes import main
     app.register_blueprint(main)
 
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template('public/403.html'), 403
     
     """Get user in each request for more info"""
     from app.models import Usuario

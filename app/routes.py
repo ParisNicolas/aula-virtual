@@ -1,6 +1,7 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app
-from flask_login import login_required, login_user, logout_user
+from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app, abort
+from flask_login import login_required, login_user, logout_user, current_user
 from werkzeug.utils import secure_filename
+from functools import wraps
 import os
 
 from app import db
@@ -10,14 +11,53 @@ from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm,
 
 main = Blueprint('main', __name__, template_folder='templates')
 
+#Uso: @role_required(['estudiante', 'instructor', 'admin'])
+def role_required(allowed_roles):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if current_user.is_authenticated and current_user.rol in allowed_roles:
+                return f(*args, **kwargs)
+            else:
+                abort(403)  # Prohibido: el usuario no tiene permiso
+        return decorated_function
+    return decorator
+
+#Uso: @pertenece_al_curso --> En rutas con el parametro curso_id
+def pertenece_al_curso(f):
+    @wraps(f)
+    def decorated_function(curso_id, *args, **kwargs):
+        curso = Curso.query.get(curso_id)
+        
+        if curso is None:
+            abort(404)  # Si el curso no existe, devuelve un error 404
+        
+        # Verificar si el usuario actual está en la lista de usuarios asignados al curso
+        if current_user.rol != "admin" and current_user not in curso.usuarios:
+            abort(403)  # Si no pertenece al curso, devuelve un error 403
+        
+        return f(curso_id, *args, **kwargs)
+    
+    return decorated_function
+
+
+
+#------- HOME ---------
 @main.route('/')
-def home():
-    cursos = Curso.query.all()  # Asumiendo que tienes una clase llamada Curso
+@login_required
+def home():    
+    if current_user.rol == "admin":
+        cursos = Curso.query.all()
+    else :
+        cursos = current_user.cursos_asignados
+
     return render_template('home.html', cursos=cursos)
 
 
+#------- CREAR CLASES ---------
 # Crear una clase
 @main.route('/crear_curso', methods=['GET', 'POST'])
+@role_required(['admin'])
 def crear_curso():
     form = CursoForm()
 
@@ -45,6 +85,7 @@ def crear_curso():
     return render_template('admin/crear_curso.html', form=form)
 
 @main.route('/curso/eliminar/<int:curso_id>', methods=['GET'])
+@role_required(['admin'])
 def eliminar_curso(curso_id):
     # Buscar el curso por su ID
     curso = Curso.query.get(curso_id)
@@ -100,9 +141,11 @@ def logout():
     return redirect(url_for("main.home"))
 
 
-
+#------- TABLON DE ESTUDIANTES ---------
 
 @main.route('/tablon/<int:curso_id>')
+@login_required
+@pertenece_al_curso
 def tablon(curso_id):
     curso = Curso.query.get_or_404(curso_id)
     contenidos = Contenido.query.filter_by(curso_id=curso_id).all()
@@ -110,8 +153,11 @@ def tablon(curso_id):
     return render_template('tablon.html',curso=curso , contenidos=contenidos, evaluaciones=evaluaciones)
 
 
+#------- TABLON DE INSTRUCTORES ---------
 
 @main.route('/curso/<curso_id>/crear_contenido', methods=['GET', 'POST'])
+@role_required(['instructor', 'admin'])
+@pertenece_al_curso
 def crear_contenido(curso_id):
     curso = Curso.query.get_or_404(curso_id)
     form = ContentForm()
@@ -138,36 +184,58 @@ def crear_contenido(curso_id):
         db.session.commit()
 
         flash('Contenido subido exitosamente', 'success')
-        return redirect(url_for('main.ver_curso', curso_id=curso.id))
+        return redirect(url_for('main.tablon', curso_id=curso.id))
 
     return render_template('teacher/contentForm.html', form=form, curso=curso)
 
 
+#------- TABLON DE ADMIN ---------
 
 # Contenido de un curso (incluye profesor y alumnos)
-@main.route('/curso/<int:curso_id>')
+@main.route('/curso/<int:curso_id>', methods=['GET', 'POST'])
+@role_required(['admin'])
 def curso_detalle(curso_id):
     curso = Curso.query.get_or_404(curso_id)
+
+    # Obtener los usuarios asignados y no asignados
+    profesores_asignados = Usuario.query.filter(Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'instructor').all()
+    estudiantes_asignados = Usuario.query.filter(Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'estudiante').all()
     
-    # Obtener el profesor asignado al curso
-    profesores = Usuario.query.filter(Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'instructor').all()
-    
-    # Obtener los estudiantes asignados al curso
-    estudiantes = Usuario.query.filter(Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'estudiante').all()
+    profesores_no_asignados = Usuario.query.filter(~Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'instructor').all()
+    estudiantes_no_asignados = Usuario.query.filter(~Usuario.cursos_asignados.any(id=curso_id), Usuario.rol == 'estudiante').all()
+
+    formProfe = CambiarProfesorForm()
+    formProfe.profesor.choices = [(profesor.id, profesor.nombre_usuario) for profesor in profesores_no_asignados]
     
     # Crear una instancia del formulario para agregar alumnos
-    form = AgregarAlumnoForm()
+    formAlumn = AgregarAlumnoForm()
+    formAlumn.alumno_id.choices = [(alumno.id, alumno.nombre_usuario) for alumno in estudiantes_no_asignados]
+
+    if formAlumn.validate_on_submit():
+        alumno_id = formAlumn.alumno_id.data
+        curso.usuarios.append(Usuario.query.get(alumno_id))
+        db.session.commit()
+        flash('Alumno agregado exitosamente', 'success')
+        return redirect(url_for('main.curso_detalle', curso_id=curso.id))
     
-    # Obtener la lista de estudiantes disponibles para el formulario
-    lista_estudiantes = Usuario.query.filter_by(rol='estudiante').all()
-    form.alumno_id.choices = [(estudiante.id, estudiante.nombre_usuario) for estudiante in lista_estudiantes]
+    if formProfe.validate_on_submit():
+        profe_id = formProfe.profesor.data
 
-    return render_template('admin/class_admin.html', curso=curso, profesores=profesores, estudiantes=estudiantes, form=form)
+        curso.usuarios.append(Usuario.query.get(profe_id))
+        db.session.commit()
+        flash('Profesor agregado exitosamente', 'success')
+        return redirect(url_for('main.curso_detalle', curso_id=curso.id))
 
-
-
+    return render_template('admin/class_admin.html', 
+                           curso=curso, 
+                           profesores=profesores_asignados,
+                           estudiantes=estudiantes_asignados, 
+                           formAlumn=formAlumn,
+                           formProfe=formProfe,
+                           )
 
 @main.route('/curso/<int:curso_id>/cambiar_profesor', methods=['GET', 'POST'])
+@role_required(['admin'])
 def cambiar_profesor(curso_id):
     curso = Curso.query.get_or_404(curso_id)
     form = CambiarProfesorForm()
@@ -195,13 +263,14 @@ def cambiar_profesor(curso_id):
 
 # Eliminar un profesor de un curso
 @main.route('/curso/<int:curso_id>/eliminar_profesor/<int:profe_id>', methods=['POST'])
+@role_required(['admin'])
 def eliminar_profesor(curso_id, profe_id):
     curso = Curso.query.get_or_404(curso_id)
     instructor = Usuario.query.filter_by(id=profe_id, rol='instructor').first()
 
     if not instructor:
         flash('Instructor no encontrado', 'error')
-        return redirect(url_for('curso_detalle', curso_id=curso_id))
+        return redirect(url_for('main.curso_detalle', curso_id=curso_id))
     
     if instructor in curso.usuarios:
         curso.usuarios.remove(instructor)
@@ -210,10 +279,11 @@ def eliminar_profesor(curso_id, profe_id):
     else:
         flash('El instructor no está asignado a este curso', 'error')
 
-    return redirect(url_for('curso_detalle', curso_id=curso.id))
+    return redirect(url_for('main.curso_detalle', curso_id=curso.id))
 
 
 @main.route('/curso/<int:curso_id>/agregar_alumno', methods=['GET', 'POST'])
+@role_required(['admin'])
 def agregar_alumno_curso(curso_id):
     curso = Curso.query.get_or_404(curso_id)
     form = AgregarAlumnoForm()
@@ -235,6 +305,7 @@ def agregar_alumno_curso(curso_id):
 
 # Ruta para eliminar un alumno
 @main.route('/curso/<int:curso_id>/eliminar_alumno/<int:alumno_id>', methods=['POST'])
+@role_required(['admin'])
 def eliminar_alumno(curso_id, alumno_id):
     # Elimina el registro de la tabla intermedia
     db.session.execute(asignaciones.delete().where(
@@ -247,25 +318,7 @@ def eliminar_alumno(curso_id, alumno_id):
 
 
 
-
-# Ruta para agregar un alumno
-@main.route('/curso/<int:curso_id>/agregar_alumno', methods=['POST'])
-def agregar_alumno(curso_id):
-    alumno_id = request.form.get('alumno_id')
-    asignacion = Curso.insert().values(usuario_id=alumno_id, curso_id=curso_id, rol_asignado='estudiante')
-    db.session.execute(asignacion)
-    db.session.commit()
-    return redirect(url_for('main.curso_detalle', curso_id=curso_id))
-
-
-
 #-----------SECCION 2---------
-
-
-#Eliminar un contenido (solo profesores)
-@main.route('/curso/<curso_id>/eliminar', methods=['POST'])
-def eliminar_contenido(curso_id):
-    return render_template('algo.html')
 
 #Subir una respuesta a una evaluacion
 @main.route('/evaluacion/<evaluacion_id>', methods=['POST'])
