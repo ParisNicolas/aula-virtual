@@ -56,7 +56,6 @@
     <nav class="d-flex justify-content-evenly align-items-center">
         <h2 class="text-info">
             {% if current_user.is_authenticated %}
-            <i class="fa-regular fa-user me-2"></i>
             {{current_user.nombre_usuario + " (" + current_user.rol + ")"}}
             {% endif %}
         </h2>

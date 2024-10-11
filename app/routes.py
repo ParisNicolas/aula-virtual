@@ -44,6 +44,21 @@ def crear_curso():
 
     return render_template('admin/crear_curso.html', form=form)
 
+@main.route('/curso/eliminar/<int:curso_id>', methods=['GET'])
+def eliminar_curso(curso_id):
+    # Buscar el curso por su ID
+    curso = Curso.query.get(curso_id)
+
+    if not curso:
+        flash('Curso no encontrado', 'error')
+        return redirect(url_for('main.home'))
+
+    # Eliminar el curso de la base de datos
+    db.session.delete(curso)
+    db.session.commit()
+
+    flash('Curso eliminado con éxito', 'success')
+    return redirect(url_for('main.home'))
 
 
 #------- LOGIN ---------
@@ -84,6 +99,9 @@ def logout():
     flash("Has cerrado session.", "success")
     return redirect(url_for("main.home"))
 
+
+
+
 @main.route('/tablon/<int:curso_id>')
 def tablon(curso_id):
     curso = Curso.query.get_or_404(curso_id)
@@ -93,7 +111,7 @@ def tablon(curso_id):
 
 
 
-@main.route('/curso/<curso_id>/crear', methods=['GET', 'POST'])
+@main.route('/curso/<curso_id>/crear_contenido', methods=['GET', 'POST'])
 def crear_contenido(curso_id):
     curso = Curso.query.get_or_404(curso_id)
     form = ContentForm()
@@ -126,7 +144,6 @@ def crear_contenido(curso_id):
 
 
 
-
 # Contenido de un curso (incluye profesor y alumnos)
 @main.route('/curso/<int:curso_id>')
 def curso_detalle(curso_id):
@@ -146,6 +163,7 @@ def curso_detalle(curso_id):
     form.alumno_id.choices = [(estudiante.id, estudiante.nombre_usuario) for estudiante in lista_estudiantes]
 
     return render_template('admin/class_admin.html', curso=curso, profesores=profesores, estudiantes=estudiantes, form=form)
+
 
 
 
