@@ -153,7 +153,8 @@ def tablon(curso_id):
     return render_template('tablon.html',curso=curso , contenidos=contenidos, evaluaciones=evaluaciones)
 
 @main.route('/curso/<int:curso_id>/evaluacion/<int:evaluacion_id>/entregar', methods=['GET', 'POST'])
-@role_required(['estudiante'])
+@role_required(['estudiante', 'admin'])
+@pertenece_al_curso
 def entregar_respuesta(curso_id, evaluacion_id):
     # Obtener el curso correspondiente
     curso = Curso.query.get_or_404(curso_id)
