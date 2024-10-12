@@ -82,6 +82,7 @@
         <table class="table">
             <thead>
                 <tr>
+                    <th>Vencimiento</th>
                     <th>Título</th>
                     <th>Descripción</th>
                     <th>Acción</th>
@@ -91,6 +92,7 @@
                 {% for evaluacion in evaluaciones %}
                 <tr>
                     <td>{{ evaluacion.titulo }}</td>
+                    <td>{{ evaluacion.fecha_entrega.strftime('%d-%m-%Y') }}</td>
                     <td>{{ evaluacion.descripcion }}</td>
                     <td>
                         <a href="{{ url_for('main.entregar_respuesta', curso_id=curso.id, evaluacion_id=evaluacion.id) }}"
