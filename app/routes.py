@@ -5,8 +5,8 @@ from functools import wraps
 import os
 
 from app import db
-from app.models import Curso, Usuario, Contenido, asignaciones, Evaluacion
-from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm, CursoForm, EVAForm
+from app.models import Curso, Usuario, Contenido, asignaciones, Evaluacion, Entrega
+from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm, CursoForm, EVAForm, RespuestaForm
 
 
 main = Blueprint('main', __name__, template_folder='templates')
@@ -152,10 +152,37 @@ def tablon(curso_id):
     evaluaciones = Evaluacion.query.filter_by(curso_id=curso_id).all()
     return render_template('tablon.html',curso=curso , contenidos=contenidos, evaluaciones=evaluaciones)
 
-#Subir una respuesta a una evaluacion
-@main.route('/evaluacion/<evaluacion_id>', methods=['POST'])
-def subir_respuesta(evaluacion_id):
-    return render_template('algo.html')
+@main.route('/curso/<int:curso_id>/evaluacion/<int:evaluacion_id>/entregar', methods=['GET', 'POST'])
+@role_required(['estudiante'])
+def entregar_respuesta(curso_id, evaluacion_id):
+    # Obtener el curso correspondiente
+    curso = Curso.query.get_or_404(curso_id)
+    
+    # Comprueba si el usuario ha enviado una respuesta previamente
+    entrega_existente = Entrega.query.filter_by(usuario_id=current_user.id, evaluacion_id=evaluacion_id).first()
+    
+    if entrega_existente:
+        flash('Ya has enviado una respuesta para esta evaluación.', 'warning')
+        return redirect(url_for('main.tablon', curso_id=curso_id))
+
+    form = RespuestaForm()
+
+    if form.validate_on_submit():
+        nueva_respuesta = Entrega(
+            usuario_id=current_user.id,
+            evaluacion_id=evaluacion_id,
+            respuestas=form.respuesta.data
+        )
+        db.session.add(nueva_respuesta)
+        db.session.commit()
+
+        flash('Respuesta enviada exitosamente.', 'success')
+        return redirect(url_for('main.tablon', curso_id=curso_id))
+
+    return render_template('studiant/respuestas.html', form=form, curso=curso, evaluacion_id=evaluacion_id)
+
+
+
 
 
 #------- TABLON DE INSTRUCTORES ---------

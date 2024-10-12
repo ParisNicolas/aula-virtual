@@ -1,0 +1,16 @@
+{% extends "bases_jinja/base_class.html" %}
+
+{% block content %}
+<h2>{{ curso.nombre }}</h2>
+<form method="POST" action="{{ url_for('main.entregar_respuesta', curso_id=curso.id, evaluacion_id=evaluacion_id) }}">
+    {{ form.hidden_tag() }}
+    <div class="form-group">
+        {{ form.respuesta.label(class="form-label") }}
+        {{ form.respuesta(class="form-control") }}
+        {% for error in form.respuesta.errors %}
+            <div class="invalid-feedback">{{ error }}</div>
+        {% endfor %}
+    </div>
+    <button type="submit" class="btn btn-primary">Enviar Respuesta</button>
+</form>
+{% endblock %}

@@ -52,3 +52,7 @@ class CambiarProfesorForm(FlaskForm):
 class AgregarAlumnoForm(FlaskForm):
     alumno_id = SelectField('Seleccionar Alumno', validators=[DataRequired()])
     submit = SubmitField('Agregar Alumno')
+    
+class RespuestaForm(FlaskForm):
+    respuesta = TextAreaField('Respuesta', validators=[DataRequired(), Length(max=500)])
+    submit = SubmitField('Enviar Respuesta')
