@@ -43,6 +43,9 @@
                 <li class="nav-item px-2">
                     <a href="{{ url_for('main.crear_Evaluacion', curso_id=curso.id) }}" class="btn btn-secondary">Subir evaluacion</a>
                 </li>
+                <li class="nav-item px-2">
+                    <a href="{{ url_for('main.corregir_Entregas', curso_id=curso.id) }}" class="btn btn-secondary">Entregas</a>
+                </li>
                 {% endif %}
                 {% if current_user.rol == "admin" %}
                 <li class="nav-item px-2">

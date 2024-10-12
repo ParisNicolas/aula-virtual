@@ -6,7 +6,7 @@ import os
 
 from app import db
 from app.models import Curso, Usuario, Contenido, asignaciones, Evaluacion, Entrega
-from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm, CursoForm, EVAForm, RespuestaForm
+from app.forms import LoginForm, RegisterForm, ContentForm, CambiarProfesorForm, AgregarAlumnoForm, CursoForm, EVAForm, RespuestaForm, CalificacionForm
 
 
 main = Blueprint('main', __name__, template_folder='templates')
@@ -153,6 +153,7 @@ def tablon(curso_id):
     return render_template('tablon.html',curso=curso , contenidos=contenidos, evaluaciones=evaluaciones)
 
 @main.route('/curso/<int:curso_id>/evaluacion/<int:evaluacion_id>/entregar', methods=['GET', 'POST'])
+@pertenece_al_curso
 @role_required(['estudiante'])
 def entregar_respuesta(curso_id, evaluacion_id):
     # Obtener el curso correspondiente
@@ -243,6 +244,32 @@ def crear_Evaluacion(curso_id):
 
     return render_template('teacher/EVAForm.html', form=form, curso=curso)
 
+@main.route('/curso/<int:curso_id>/entregas', methods=['GET', 'POST'])
+def corregir_Entregas(curso_id):
+    # Buscar el curso por su ID
+    curso = Curso.query.get(curso_id)  # Asegúrate de que tienes el modelo Curso definido
+    evaluaciones = Evaluacion.query.filter_by(curso_id=curso_id).all()
+    
+    entregas = []  # Inicializa entregas aquí
+    form = CalificacionForm()  # Inicializa el formulario
+
+    if request.method == 'POST':
+        evaluacion_id = request.form.get('evaluacion_id')
+        entregas = Entrega.query.filter_by(evaluacion_id=evaluacion_id).all()
+
+        # Manejar la calificación si se envió el formulario
+        if form.validate_on_submit():
+            calificacion = form.calificacion.data
+            entrega_id = form.entrega_id.data
+            
+            entrega = Entrega.query.get(entrega_id)
+            entrega.calificacion = calificacion
+            db.session.commit()
+            return redirect(url_for('main.corregir_Entregas', curso_id=curso_id))
+
+    return render_template('teacher/entregas.html', curso=curso, evaluaciones=evaluaciones, entregas=entregas, form=form)
+
+
 
 #------- TABLON DE ADMIN ---------
 
@@ -282,12 +309,12 @@ def curso_detalle(curso_id):
         return redirect(url_for('main.curso_detalle', curso_id=curso.id))
 
     return render_template('admin/class_admin.html', 
-                           curso=curso, 
-                           profesores=profesores_asignados,
-                           estudiantes=estudiantes_asignados, 
-                           formAlumn=formAlumn,
-                           formProfe=formProfe,
-                           )
+        curso=curso, 
+        profesores=profesores_asignados,
+        estudiantes=estudiantes_asignados, 
+        formAlumn=formAlumn,
+        formProfe=formProfe,
+        )
 
 # Eliminar un profesor de un curso
 @main.route('/curso/<int:curso_id>/eliminar_profesor/<int:profe_id>', methods=['POST'])

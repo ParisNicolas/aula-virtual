@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, SubmitField, FileField, SelectField, TextAreaField, SelectMultipleField, DateField
-from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional
+from wtforms import PasswordField, StringField, SubmitField, FileField, FloatField, SelectField, TextAreaField, SelectMultipleField, DateField, HiddenField
+from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional, NumberRange
 from flask_wtf.file import FileAllowed, FileRequired
 from app.models import Usuario
 
@@ -56,3 +56,8 @@ class AgregarAlumnoForm(FlaskForm):
 class RespuestaForm(FlaskForm):
     respuesta = TextAreaField('Respuesta', validators=[DataRequired(), Length(max=500)])
     submit = SubmitField('Enviar Respuesta')
+    
+class CalificacionForm(FlaskForm):
+    calificacion = FloatField('Calificación', validators=[DataRequired()])
+    entrega_id = HiddenField('Entrega ID', validators=[DataRequired()])
+    submit = SubmitField('Calificar')

@@ -1,0 +1,53 @@
+{% extends "bases_jinja/base_class.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <h1 class="mb-4">Entregas para el Curso: <span class="text-primary">{{ curso.nombre }}</span></h1> <!-- Asegúrate de que 'nombre' es un atributo del modelo Curso -->
+
+    <form method="POST" class="mb-4">
+        <div class="form-group">
+            <label for="evaluacion_id">Selecciona una Evaluación:</label>
+            <select name="evaluacion_id" class="form-control" onchange="this.form.submit()">
+                <option value="">Seleccione una evaluación</option>
+                {% for evaluacion in evaluaciones %}
+                    <option value="{{ evaluacion.id }}">{{ evaluacion.titulo }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </form>
+
+    {% if entregas %}
+        <h2 class="mb-4">Entregas de la Evaluación Seleccionada</h2>
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Usuario</th>
+                    <th>Respuestas</th>
+                    <th>Calificación</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entrega in entregas %}
+                    <tr>
+                        <td>{{ entrega.usuario_id }}</td>
+                        <td>{{ entrega.respuestas }}</td>
+                        <td>{{ entrega.calificacion }}</td>
+                        <td>
+                            <form method="POST" class="form-inline">
+                                {{ form.hidden_tag() }}
+                                <div class="form-group mb-2">
+                                    {{ form.calificacion.label(class="sr-only") }} 
+                                    {{ form.calificacion(size=10, class="form-control") }}
+                                </div>
+                                {{ form.entrega_id(value=entrega.id) }}
+                                <button type="submit" class="btn btn-primary mb-2">Actualizar</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+{% endblock %}
