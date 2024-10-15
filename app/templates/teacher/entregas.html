@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container mt-5">
-    <h1 class="mb-4">Entregas para el Curso: <span class="text-primary">{{ curso.nombre }}</span></h1> <!-- Asegúrate de que 'nombre' es un atributo del modelo Curso -->
+    <h1 class="mb-4">Entregas para el Curso: <span class="text-primary">{{ curso.nombre }}</span></h1>
 
     <form method="POST" class="mb-4">
         <div class="form-group">
@@ -30,24 +30,30 @@
             <tbody>
                 {% for entrega in entregas %}
                     <tr>
-                        <td>{{ entrega.usuario_id }}</td>
+                        <td>{{ usuarios.get(entrega.usuario_id, 'Usuario no encontrado') }}</td>
                         <td>{{ entrega.respuestas }}</td>
-                        <td>{{ entrega.calificacion }}</td>
+                        <td>{{ entrega.calificacion if entrega.calificacion is not none else 'No calificada' }}</td>
                         <td>
-                            <form method="POST" class="form-inline">
+                            <form action="{{ url_for('main.actualizar_calificaciones', curso_id=curso.id) }}" method="POST" class="form-inline">
+
+
                                 {{ form.hidden_tag() }}
                                 <div class="form-group mb-2">
                                     {{ form.calificacion.label(class="sr-only") }} 
-                                    {{ form.calificacion(size=10, class="form-control") }}
+                                    {{ form.calificacion(size=10, class="form-control", value=entrega.calificacion) }}
                                 </div>
                                 {{ form.entrega_id(value=entrega.id) }}
                                 <button type="submit" class="btn btn-primary mb-2">Actualizar</button>
                             </form>
                         </td>
                     </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center">No hay entregas disponibles.</td>
+                    </tr>
                 {% endfor %}
             </tbody>
-        </table>
+        </table>        
     {% endif %}
 </div>
 {% endblock %}

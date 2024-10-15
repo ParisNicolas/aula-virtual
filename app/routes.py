@@ -245,13 +245,12 @@ def crear_Evaluacion(curso_id):
     return render_template('teacher/EVAForm.html', form=form, curso=curso)
 
 @main.route('/curso/<int:curso_id>/entregas', methods=['GET', 'POST'])
-def corregir_Entregas(curso_id):
-    # Buscar el curso por su ID
-    curso = Curso.query.get(curso_id)  # Asegúrate de que tienes el modelo Curso definido
+def cargar_entregas(curso_id):
+    curso = Curso.query.get(curso_id)
     evaluaciones = Evaluacion.query.filter_by(curso_id=curso_id).all()
-    
-    entregas = []  # Inicializa entregas aquí
-    form = CalificacionForm()  # Inicializa el formulario
+    entregas = []
+    usuarios = {usuario.id: usuario.nombre_usuario for usuario in Usuario.query.all()}
+    form = CalificacionForm()  # Asegúrate de crear el formulario aquí
 
     if request.method == 'POST':
         evaluacion_id = request.form.get('evaluacion_id')
@@ -259,16 +258,43 @@ def corregir_Entregas(curso_id):
 
         # Manejar la calificación si se envió el formulario
         if form.validate_on_submit():
-            calificacion = form.calificacion.data
             entrega_id = form.entrega_id.data
+            calificacion = form.calificacion.data
             
             entrega = Entrega.query.get(entrega_id)
+            if entrega:
+                entrega.calificacion = calificacion
+                db.session.commit()
+                flash('Calificación actualizada exitosamente.', 'success')
+            else:
+                flash('Entrega no encontrada.', 'error')
+
+    return render_template('teacher/entregas.html', curso=curso, evaluaciones=evaluaciones, entregas=entregas, usuarios=usuarios, curso_id=curso_id, form=form)
+
+
+
+@main.route('/curso/<int:curso_id>/entregas/actualizar', methods=['POST'])
+def actualizar_calificaciones(curso_id):
+    form = CalificacionForm()
+    
+    if form.validate_on_submit():
+        entrega_id = form.entrega_id.data
+        calificacion = form.calificacion.data
+        
+        entrega = Entrega.query.get(entrega_id)
+        if entrega:
             entrega.calificacion = calificacion
             db.session.commit()
-            return redirect(url_for('main.corregir_Entregas', curso_id=curso_id))
+            flash('Calificación actualizada exitosamente.', 'success')
+        else:
+            flash('Entrega no encontrada.', 'error')
+    else:
+        flash('Errores de validación: ' + str(form.errors), 'error')
 
-    return render_template('teacher/entregas.html', curso=curso, evaluaciones=evaluaciones, entregas=entregas, form=form)
+    return redirect(url_for('main.cargar_entregas', curso_id=curso_id))
 
+
+ 
 
 
 #------- TABLON DE ADMIN ---------

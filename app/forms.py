@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import PasswordField, StringField, SubmitField, FileField, FloatField, SelectField, TextAreaField, SelectMultipleField, DateField, HiddenField
+from wtforms import PasswordField, StringField, SubmitField, FileField, DecimalField, SelectField, TextAreaField, SelectMultipleField, DateField, HiddenField
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError, Optional, NumberRange
 from flask_wtf.file import FileAllowed, FileRequired
 from app.models import Usuario
@@ -58,6 +58,6 @@ class RespuestaForm(FlaskForm):
     submit = SubmitField('Enviar Respuesta')
     
 class CalificacionForm(FlaskForm):
-    calificacion = FloatField('Calificación', validators=[DataRequired()])
     entrega_id = HiddenField('Entrega ID', validators=[DataRequired()])
-    submit = SubmitField('Calificar')
+    calificacion = DecimalField('Calificación', places=2, validators=[DataRequired()])
+    submit = SubmitField('Actualizar')
