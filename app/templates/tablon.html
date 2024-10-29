@@ -95,8 +95,14 @@
                     <td>{{ evaluacion.fecha_entrega.strftime('%d-%m-%Y') }}</td>
                     <td>{{ evaluacion.descripcion }}</td>
                     <td>
+                        {% if current_user.rol == "instructor" or current_user.rol == "admin" %}
+                        <a href="{{ url_for('main.cargar_entregas', curso_id=curso.id) }}" class="btn btn-success">
+                            Calificar
+                        </a>
+                        {% else %}
                         <a href="{{ url_for('main.entregar_respuesta', curso_id=curso.id, evaluacion_id=evaluacion.id) }}"
                             class="btn btn-primary">Responder</a>
+                        {% endif %}
                     </td>
                 </tr>
                 {% else %}

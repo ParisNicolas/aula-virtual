@@ -247,29 +247,41 @@ def crear_Evaluacion(curso_id):
 @main.route('/curso/<int:curso_id>/entregas', methods=['GET', 'POST'])
 def cargar_entregas(curso_id):
     curso = Curso.query.get(curso_id)
-    evaluaciones = Evaluacion.query.filter_by(curso_id=curso_id).all()
-    entregas = []
     usuarios = {usuario.id: usuario.nombre_usuario for usuario in Usuario.query.all()}
-    form = CalificacionForm()  # Asegúrate de crear el formulario aquí
+
+    # Crear un formulario para cada entrega y almacenar en un diccionario
+    entregas = (
+    db.session.query(Entrega, Evaluacion)
+    .join(Evaluacion, Entrega.evaluacion_id == Evaluacion.id)
+    .filter(Evaluacion.curso_id == curso_id)
+    .order_by(Entrega.id)
+    .all()
+    )
+    formularios = {entrega.id: CalificacionForm(entrega_id=entrega.id) for entrega, evaluacion in entregas}
 
     if request.method == 'POST':
-        evaluacion_id = request.form.get('evaluacion_id')
-        entregas = Entrega.query.filter_by(evaluacion_id=evaluacion_id).all()
-
-        # Manejar la calificación si se envió el formulario
+        entrega_id = int(request.form.get('entrega_id'))
+        form = formularios[entrega_id]  # Selecciona el formulario específico
+        
+        # Procesar el formulario si es válido
         if form.validate_on_submit():
-            entrega_id = form.entrega_id.data
             calificacion = form.calificacion.data
-            
             entrega = Entrega.query.get(entrega_id)
             if entrega:
                 entrega.calificacion = calificacion
                 db.session.commit()
-                flash('Calificación actualizada exitosamente.', 'success')
+                flash(f'Calificación de la entrega {entrega_id} actualizada.', 'success')
             else:
                 flash('Entrega no encontrada.', 'error')
 
-    return render_template('teacher/entregas.html', curso=curso, evaluaciones=evaluaciones, entregas=entregas, usuarios=usuarios, curso_id=curso_id, form=form)
+    return render_template(
+        'teacher/entregas.html', 
+        curso=curso, 
+        entregas=entregas, 
+        usuarios=usuarios, 
+        curso_id=curso_id, 
+        formularios=formularios
+    )
 
 
 

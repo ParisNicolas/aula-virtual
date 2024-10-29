@@ -4,23 +4,13 @@
 <div class="container mt-5">
     <h1 class="mb-4">Entregas para el Curso: <span class="text-primary">{{ curso.nombre }}</span></h1>
 
-    <form method="POST" class="mb-4">
-        <div class="form-group">
-            <label for="evaluacion_id">Selecciona una Evaluación:</label>
-            <select name="evaluacion_id" class="form-control" onchange="this.form.submit()">
-                <option value="">Seleccione una evaluación</option>
-                {% for evaluacion in evaluaciones %}
-                    <option value="{{ evaluacion.id }}">{{ evaluacion.titulo }}</option>
-                {% endfor %}
-            </select>
-        </div>
-    </form>
-
+    <br/>
     {% if entregas %}
         <h2 class="mb-4">Entregas de la Evaluación Seleccionada</h2>
         <table class="table table-bordered table-striped">
             <thead class="thead-dark">
                 <tr>
+                    <th>Evaluación</th>
                     <th>Usuario</th>
                     <th>Respuestas</th>
                     <th>Calificación</th>
@@ -28,8 +18,10 @@
                 </tr>
             </thead>
             <tbody>
-                {% for entrega in entregas %}
+                
+                {% for entrega, evaluacion in entregas %}
                     <tr>
+                        <td>{{ evaluacion.titulo if evaluacion.titulo else 'Null' }}</td>
                         <td>{{ usuarios.get(entrega.usuario_id, 'Usuario no encontrado') }}</td>
                         <td>{{ entrega.respuestas }}</td>
                         <td>{{ entrega.calificacion if entrega.calificacion is not none else 'No calificada' }}</td>
@@ -37,12 +29,12 @@
                             <form action="{{ url_for('main.actualizar_calificaciones', curso_id=curso.id) }}" method="POST" class="form-inline">
 
 
-                                {{ form.hidden_tag() }}
+                                {{ formularios[entrega.id].hidden_tag() }}
                                 <div class="form-group mb-2">
-                                    {{ form.calificacion.label(class="sr-only") }} 
-                                    {{ form.calificacion(size=10, class="form-control", value=entrega.calificacion) }}
+                                    {{ formularios[entrega.id].calificacion.label(class="sr-only") }} 
+                                    {{ formularios[entrega.id].calificacion(size=10, class="form-control", value=entrega.calificacion) }}
                                 </div>
-                                {{ form.entrega_id(value=entrega.id) }}
+                                {{ formularios[entrega.id].entrega_id(value=entrega.id) }}
                                 <button type="submit" class="btn btn-primary mb-2">Actualizar</button>
                             </form>
                         </td>
